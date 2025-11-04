@@ -1,0 +1,10 @@
+[Unit]
+Description=zram writeback service
+Documentation=man:rpi-swap(8)
+Requires=dev-zram0.swap
+After=dev-zram0.swap
+ConditionPathExists=/sys/block/zram0/writeback
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'echo idle > /sys/block/zram0/writeback'

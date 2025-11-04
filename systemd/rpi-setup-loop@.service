@@ -1,0 +1,9 @@
+[Unit]
+Description=rpi-setup-loop - set up file on loop device
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/losetup --nooverlap --find /%I
+ExecStartPost=/usr/lib/rpi-loop-utils/bin/rpi-wait-backingfile-symlink %i
+ExecStop=/sbin/losetup -d /dev/disk/by-backingfile/%i
+RemainAfterExit=yes

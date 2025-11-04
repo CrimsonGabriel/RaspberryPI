@@ -1,0 +1,150 @@
+ # /usr/local/bin/send_time.py
+# Wszechstronny klient RPi:
+# 1. Wysyla dane czujnikow (POST /data)
+# 2. Wysyla meldunek czasu (POST /update) - dla utrzymania statusu
+# 3. Rejestruje port RPi (POST /register/rasp) - dla powiadomien zwrotnych
+
+import requests
+import socket
+from datetime import datetime
+import pytz
+import sys
+import random
+
+# --- KONFIGURACJA ---
+# Adres serwera VPS
+SERVER_URL = "https://testserwera.pl" # ZMIEŃ NA TWÓJ ADRES
+PASSWORD = "ZMIEN_TO_HASLO_XD" # Upewnij się, że to hasło jest identyczne jak w server.js
+# Port, na którym RPi nasłuchuje (jeśli serwer ma wysyłać coś do RPi)
+RPi_LISTEN_PORT = 3001
+# --------------------
+
+def get_local_ip():
+    """Probuje pobrac lokalny adres IP w sieci (np. 192.168.x.x)"""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # Symulacja polaczenia, aby pobrac adres IP interfejsu
+        s.connect(('10.255.255.255', 1)) 
+        IP = s.getsockname()[0]
+    except Exception:
+        # Fallback na 127.0.0.1, jesli brak interfejsu
+        IP = '127.0.0.1' 
+    finally:
+        s.close()
+    return IP
+
+# --- FUNKCJE POMOCNICZE CZUJNIKOW (MOCKUP) ---
+
+def get_mock_sensor_data():
+    """Generuje listę obiektów czujników z losowymi wartościami, zgodnie z mockupem."""
+    all_sensors = [
+        # BRAMKA 1 (Gateway 1)
+        { 'gateway_id': "1", 'sensor_id': "101", 'type': "temperature", 'get_value': lambda: round(random.uniform(18.0, 22.0), 2) },
+        { 'gateway_id': "1", 'sensor_id': "202", 'type': "humidity", 'get_value': lambda: round(random.uniform(30.0, 50.0), 2) },
+        { 'gateway_id': "1", 'sensor_id': "303", 'type': "door_contact", 'get_value': lambda: "1" if random.random() < 0.1 else "0" }, # 10% szans na otwarcie
+
+        # BRAMKA 2 (Gateway 2)
+        { 'gateway_id': "2", 'sensor_id': "404", 'type': "temperature", 'get_value': lambda: round(random.uniform(18.0, 22.0), 2) },
+        { 'gateway_id': "2", 'sensor_id': "505", 'type': "humidity", 'get_value': lambda: round(random.uniform(30.0, 50.0), 2) },
+        { 'gateway_id': "2", 'sensor_id': "606", 'type': "door_contact", 'get_value': lambda: "1" if random.random() < 0.1 else "0" } # 10% szans na otwarcie
+    ]
+
+    sensor_data_list = []
+    # Używamy UTC i konwertujemy na polski czas, aby timestamp był prawidłowy (milisekundy)
+    timestamp_ms = int(datetime.now(pytz.timezone('Europe/Warsaw')).timestamp() * 1000)
+    
+    for sensor in all_sensors:
+        sensor_data_list.append({
+            "gateway_id": sensor['gateway_id'],
+            "sensor_id": sensor['sensor_id'],
+            "type": sensor['type'],
+            "value": str(sensor['get_value']()), # Wartość jako string!
+            "timestamp": timestamp_ms
+        })
+    return sensor_data_list
+
+# --- NOWA FUNKCJA WYSYŁAJĄCA DANE CZUJNIKÓW (REST) ---
+
+def send_sensor_data():
+    """Generuje dane czujników i wysyła je do serwera VPS (POST /data)."""
+    print("Wykonuje: Wysylanie danych czujnikow do serwera (POST /data)...")
+
+    API_ENDPOINT = f"{SERVER_URL}/data"
+    sensor_data = get_mock_sensor_data()
+
+    payload = {
+        "password": PASSWORD,
+        "sensors": sensor_data # Wysyłamy tablicę danych pod kluczem "sensors"
+    }
+
+    try:
+        r = requests.post(API_ENDPOINT, json=payload, timeout=5)
+        r.raise_for_status()
+        print(f"Dane czujnikow wyslane pomyslnie. Serwer status: {r.status_code}")
+    except Exception as e:
+        print(f"Blad wysylania danych czujnikow: {e}")
+
+# --- STARA FUNKCJA MELDUNKU CZASU (REST) ---
+
+def send_time_report():
+    """Wysyła meldunek czasu i szczegóły IP do serwera VPS (POST /update)."""
+    print("Wykonuje: Wysylanie meldunku czasu (POST /update)...")
+
+    API_ENDPOINT = f"{SERVER_URL}/update" # Stary endpoint do meldunku
+    
+    # Tworzenie tekstu meldunku na wzór starego pliku
+    local_ip = get_local_ip()
+    local_time = datetime.now(pytz.timezone('Europe/Warsaw')).strftime('%Y-%m-%d %H:%M:%S %Z')
+
+    report_text = f"Ostatni meldunek (RPi):\n" \
+                  f"Czas lokalny: {local_time}\n" \
+                  f"Lokalny IP: {local_ip}\n" \
+                  f"Serwer nasluchuje na porcie: {RPi_LISTEN_PORT}\n" \
+                  f"Ostatnio wyslano {len(get_mock_sensor_data())} czujnikow."
+
+    payload = {
+        "password": PASSWORD,
+        "text": report_text 
+    }
+
+    try:
+        r = requests.post(API_ENDPOINT, json=payload, timeout=5)
+        r.raise_for_status()
+        print(f"Meldunek czasu wyslany pomyslnie. Serwer status: {r.status_code}")
+    except Exception as e:
+        print(f"Blad wysylania meldunku czasu: {e}")
+
+# --- FUNKCJA REJESTRACJI (BEZ ZMIAN) ---
+
+def register_rpi_ip():
+    """Wysyla port RPi, aby serwer VPS pobral publiczny adres IP."""
+    print("Wykonuje: Rejestracja portu RPi (POST /register/rasp)...")
+
+    API_ENDPOINT = f"{SERVER_URL}/register/rasp"
+    
+    payload = {
+        "password": PASSWORD,
+        "port": RPi_LISTEN_PORT
+    }
+
+    try:
+        r = requests.post(API_ENDPOINT, json=payload, timeout=5)
+        r.raise_for_status()
+        print(f"Port RPi zarejestrowany. Publiczny IP pobrano przez Serwer.")
+    except Exception as e:
+        print(f"Blad rejestracji portu RPi: {e}")
+
+# --- URUCHOMIENIE LOGIKI GLOWNEJ ---
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == 'register':
+        # Specjalny tryb tylko do jednorazowej rejestracji IP
+        register_rpi_ip()
+    else:
+        # Domyślnie (np. co minutę przez cron):
+        # 1. Wyslij dane czujnikow
+        send_sensor_data()
+        # 2. Wyslij meldunek czasu (do sprawdzenia statusu RPi)
+        send_time_report()
+        # 3. Upewnij sie, ze IP jest zarejestrowane (mozna robic rzadziej)
+        register_rpi_ip()

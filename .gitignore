@@ -1,0 +1,46 @@
+# === BEZPIECZEŃSTWO ===
+# Klucze SSH
+.ssh/
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+known_hosts
+
+# === SYSTEM ===
+/proc/
+/sys/
+/dev/
+/run/
+/tmp/
+/var/log/
+/var/tmp/
+/mnt/
+/media/
+/lost+found/
+/boot/
+/lib/
+/bin/
+/sbin/
+/usr/
+
+# === KATALOGI Z SYSTEMU ===
+/root/
+/srv/
+/opt/
+/swapfile
+*.swp
+*.bak
+*.tmp
+
+# === PYTHON / KOMPILACJA ===
+__pycache__/
+*.pyc
+*.pyo
+
+# === GIT / IDE ===
+.git/
+.idea/
+.vscode/
+.DS_Store
+

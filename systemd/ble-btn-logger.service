@@ -1,0 +1,18 @@
+[Unit]
+Description=BLE button logger (Bleak) -> presses.jsonl
+After=bluetooth.target network-online.target
+Wants=bluetooth.target
+
+[Service]
+Type=simple
+User=piotr
+WorkingDirectory=/home/piotr/ble_logger
+Environment=BLEAK_LOGGING=1
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 -u /home/piotr/ble_logger/ble_btn_logger.py
+Restart=always
+RestartSec=2
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

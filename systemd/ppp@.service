@@ -1,0 +1,15 @@
+[Unit]
+Description=PPP link to %I
+Documentation=man:pppd(8)
+Documentation=https://ppp.samba.org/documentation.html
+Before=network.target
+
+[Service]
+Type=notify
+ExecStart=/usr/sbin/pppd call %I nodetach nolog up_sdnotify
+ExecReload=/bin/kill -HUP $MAINPID
+SuccessExitStatus=0 5 12 13 14
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

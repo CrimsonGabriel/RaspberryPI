@@ -1,0 +1,10 @@
+[Unit]
+Description=Initialize apt-listchanges database for APT
+Documentation=man:apt-listchanges
+
+[Service]
+Type=oneshot
+ExecStart=python3 -m apt_listchanges.populate_database --profile apt
+ExecStartPost=systemctl disable apt-listchanges.timer
+ExecStartPost=systemctl stop apt-listchanges.timer
+IOSchedulingClass=idle

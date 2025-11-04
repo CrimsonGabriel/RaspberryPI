@@ -1,0 +1,11 @@
+[Unit]
+Description=Remove swap file /%I
+DefaultDependencies=no
+After=systemd-remount-fs.service
+Requires=systemd-remount-fs.service
+ConditionPathExists=/%I
+Conflicts=%i.swap
+
+[Service]
+Type=oneshot
+ExecStart=/bin/rm -f /%I
