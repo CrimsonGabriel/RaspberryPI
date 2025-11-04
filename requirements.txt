@@ -1,0 +1,5 @@
+bleak==0.22.3
+dbus-fast==2.44.1
+requests==2.32.3
+types-requests==2.32
+types-requests-oauthlib==2.0
