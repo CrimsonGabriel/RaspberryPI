@@ -1,5 +1,5 @@
 # === BEZPIECZEŃSTWO ===
-# Klucze SSH
+# Klucze SSH i inne poufne pliki
 .ssh/
 *.pem
 *.key
@@ -7,40 +7,25 @@ id_rsa*
 id_ed25519*
 known_hosts
 
-# === SYSTEM ===
-/proc/
-/sys/
-/dev/
-/run/
-/tmp/
-/var/log/
-/var/tmp/
-/mnt/
-/media/
-/lost+found/
-/boot/
-/lib/
-/bin/
-/sbin/
-/usr/
-
-# === KATALOGI Z SYSTEMU ===
-/root/
-/srv/
-/opt/
-/swapfile
+# === SYSTEM / BACKUP ===
 *.swp
 *.bak
 *.tmp
 
-# === PYTHON / KOMPILACJA ===
+# === PYTHON ===
 __pycache__/
 *.pyc
 *.pyo
+venv/
 
 # === GIT / IDE ===
 .git/
 .idea/
 .vscode/
 .DS_Store
+
+# === LOGI I DANE URUCHOMIENIOWE ===
+ble_logger/*.log
+ble_logger/presses.jsonl
+ble_logger/.presses.offset
 
