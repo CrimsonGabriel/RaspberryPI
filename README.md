@@ -27,8 +27,31 @@ Edge computing component of the **Modular Smart Home Ecosystem**. Handles hardwa
 - [VPS Frontend Repository](https://github.com/CrimsonGabriel/VPS-frontend)
 - [Android App Repository](https://github.com/CrimsonGabriel/Android-SmartHome)
 
-[ Raspberry Pi (IoT Edge Node) ] ──(MQTT / REST API)──┐
-                                                     │
-[ Android App (Mobile Client)  ] ──(REST / WS API)───┼──> [ VPS Backend (Central API) ]
-                                                     │           │
-[ Web Frontend (Admin Panel)   ] ──(REST / WS API)───┘           └──> [ Database ]
+```mermaid
+graph TD
+    subgraph Clients["📱 & 💻 Client Layer"]
+        APP["📱 Android App<br/>(Mobile Client)"]
+        WEB["💻 Web Dashboard<br/>(VPS Frontend)"]
+    end
+
+    subgraph Cloud["☁️ Cloud Infrastructure"]
+        VPS["⚡ Central VPS Backend<br/>(REST API / WebSockets / DB)"]
+    end
+
+    subgraph Edge["🔌 Edge & Hardware Layer"]
+        RPI["🔌 Raspberry Pi<br/>(IoT Edge Node)"]
+        SENSORS["🌡️ Sensors & Actuators<br/>(Relays, Temp, Motion)"]
+    end
+
+    %% Connections
+    APP <-->|"REST API / WebSockets"| VPS
+    WEB <-->|"REST API / WebSockets"| VPS
+    VPS <-->|"Telemetry / Commands (MQTT/REST)"| RPI
+    RPI <-->|"GPIO / Serial"| SENSORS
+
+    %% Styling
+    style VPS fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#fff
+    style RPI fill:#1e293b,stroke:#f97316,stroke-width:2px,color:#fff
+    style APP fill:#1e293b,stroke:#a855f7,stroke-width:2px,color:#fff
+    style WEB fill:#1e293b,stroke:#22c55e,stroke-width:2px,color:#fff
+    style SENSORS fill:#0f172a,stroke:#64748b,stroke-width:1px,color:#94a3b8
